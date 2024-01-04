@@ -7,7 +7,7 @@ RUN apk add git && \
 # STEP2: BUILD THE FRONTEND
 FROM node:18-alpine AS builder_frontend
 WORKDIR /home/
-COPY --from=builder_prepare /home/filestash/ ./
+COPY --from=builder_prepare /home/KamelBox/ ./
 RUN apk add make git gzip brotli && \
     npm install --legacy-peer-deps && \
     make build_frontend && \
@@ -63,11 +63,11 @@ RUN apt-get update > /dev/null && \
     find /usr/share/emacs -name '*.png' | xargs rm -f && \
     find /usr/share/emacs -name '*.xpm' | xargs rm -f
 
-RUN useradd filestash && \
-    chown -R filestash:filestash /app/ && \
+RUN useradd KamelBox && \
+    chown -R KamelBox:KamelBox /app/ && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /tmp/*
 
-USER filestash
-CMD ["/app/filestash"]
+USER KamelBox
+CMD ["/app/KamelBox"]
 EXPOSE 8334
