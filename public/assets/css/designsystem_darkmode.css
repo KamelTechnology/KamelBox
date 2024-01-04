@@ -1,0 +1,12 @@
+body.dark-mode {
+    --bg-color: #1e1f22;
+    --color: #f1f1f1;
+    --light: #dfe1e5;
+
+
+    --border: #303438;
+}
+
+body.dark-mode input {
+    color: var(--bg-color);
+}
