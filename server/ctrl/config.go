@@ -1,7 +1,7 @@
 package ctrl
 
 import (
-	. "github.com/mickael-kerjean/filestash/server/common"
+	. "github.com/KamelTechnology/KamelBox/server/common"
 	"io/ioutil"
 	"net/http"
 )

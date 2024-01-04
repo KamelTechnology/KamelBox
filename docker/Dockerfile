@@ -2,7 +2,7 @@
 FROM alpine:latest as builder_prepare
 WORKDIR /home/
 RUN apk add git && \
-    git clone --depth 1 https://github.com/KamelTechnology/KamelBox
+    git clone --branch change-git-repo --depth 1 https://github.com/KamelTechnology/KamelBox
 
 # STEP2: BUILD THE FRONTEND
 FROM node:18-alpine AS builder_frontend

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"github.com/gorilla/mux"
-	. "github.com/mickael-kerjean/filestash/server/common"
+	. "github.com/KamelTechnology/KamelBox/server/common"
 	"io"
 	"math/rand"
 	"net/http"

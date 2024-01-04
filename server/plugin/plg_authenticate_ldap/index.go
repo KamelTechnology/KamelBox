@@ -1,7 +1,7 @@
 package plg_authenticate_ldap
 
 import (
-	. "github.com/mickael-kerjean/filestash/server/common"
+	. "github.com/KamelTechnology/KamelBox/server/common"
 	"net/http"
 )
 

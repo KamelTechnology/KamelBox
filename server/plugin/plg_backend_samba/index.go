@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/hirochachacha/go-smb2"
-	. "github.com/mickael-kerjean/filestash/server/common"
+	. "github.com/KamelTechnology/KamelBox/server/common"
 )
 
 var SambaCache AppCache
