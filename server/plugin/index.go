@@ -21,7 +21,7 @@ import (
 	_ "github.com/KamelTechnology/KamelBox/server/plugin/plg_backend_nfs"
 	_ "github.com/KamelTechnology/KamelBox/server/plugin/plg_backend_nop"
 	_ "github.com/KamelTechnology/KamelBox/server/plugin/plg_backend_s3"
-	_ "plg_backend_oss"
+	_ "github.com/KamelTechnology/KamelBox/server/plugin/plg_backend_oss"
 	_ "github.com/KamelTechnology/KamelBox/server/plugin/plg_backend_samba"
 	_ "github.com/KamelTechnology/KamelBox/server/plugin/plg_backend_sftp"
 	_ "github.com/KamelTechnology/KamelBox/server/plugin/plg_backend_storj"
