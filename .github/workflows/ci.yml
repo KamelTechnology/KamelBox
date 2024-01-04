@@ -59,7 +59,7 @@ jobs:
     - name: Clone test repo
       uses: actions/checkout@v3
       with:
-        repository: mickael-kerjean/filestash-test
+        repository: KamelTechnology/KamelBox-test
         ssh-key: ${{ secrets.DEPLOY_KEY_FILESTASH_TEST }}
         path: test
     - uses: actions/setup-node@v3
@@ -99,7 +99,7 @@ jobs:
     - name: Clone test repo
       uses: actions/checkout@v3
       with:
-        repository: mickael-kerjean/filestash-test
+        repository: KamelTechnology/KamelBox-test
         ssh-key: ${{ secrets.DEPLOY_KEY_FILESTASH_TEST }}
         path: test
     - uses: actions/download-artifact@v3
@@ -157,7 +157,7 @@ jobs:
   #   - name: Clone test repo
   #     uses: actions/checkout@v3
   #     with:
-  #       repository: mickael-kerjean/filestash-test
+  #       repository: KamelTechnology/KamelBox-test
   #       ssh-key: ${{ secrets.DEPLOY_KEY_FILESTASH_TEST }}
   #       path: test
   #   - name: Restore Build

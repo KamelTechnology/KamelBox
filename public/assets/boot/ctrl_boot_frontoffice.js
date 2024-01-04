@@ -114,7 +114,7 @@ async function setup_device() {
 //         window.navigator.userAgent.indexOf("Firefox/") !== -1 &&
 //         window.navigator.userAgent.indexOf("Gecko/") !== -1) {
 //         // Firefox was acting weird with service worker so we disabled it
-//         // see: https://github.com/mickael-kerjean/filestash/issues/255
+//         // see: https://github.com/KamelTechnology/KamelBox/issues/255
 //         return;
 //     }
 //     try {

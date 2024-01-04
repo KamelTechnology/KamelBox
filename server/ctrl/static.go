@@ -13,8 +13,8 @@ import (
 	"strings"
 	"text/template"
 
-	. "github.com/mickael-kerjean/filestash"
-	. "github.com/mickael-kerjean/filestash/server/common"
+	. "github.com/KamelTechnology/KamelBox"
+	. "github.com/KamelTechnology/KamelBox/server/common"
 )
 
 var (
@@ -242,7 +242,7 @@ func AboutHandler(ctx *App, res http.ResponseWriter, req *http.Request) {
 				}
 				list := strings.Split(lstr, " ")
 				for i, _ := range list {
-					list[i] = `<a href="https://github.com/mickael-kerjean/filestash/tree/` + commit +
+					list[i] = `<a href="https://github.com/KamelTechnology/KamelBox/tree/` + commit +
 						`/server/plugin/` + list[i] + `" target="_blank">` + list[i] + `</a>`
 				}
 				return strings.Join(list, " ")
@@ -251,7 +251,7 @@ func AboutHandler(ctx *App, res http.ResponseWriter, req *http.Request) {
 		Parse(Page(`
 	  <h1> {{ .Version }} </h1>
 	  <table>
-		<tr> <td style="width:150px;"> Commit hash </td> <td> <a href="https://github.com/mickael-kerjean/filestash/tree/{{ .CommitHash }}">{{ .CommitHash }}</a> </td> </tr>
+		<tr> <td style="width:150px;"> Commit hash </td> <td> <a href="https://github.com/KamelTechnology/KamelBox/tree/{{ .CommitHash }}">{{ .CommitHash }}</a> </td> </tr>
 		<tr> <td> Binary hash </td> <td> {{ index .Checksum 0}} </td> </tr>
 		<tr> <td> Config hash </td> <td> {{ index .Checksum 1}} </td> </tr>
 		<tr> <td> License </td> <td> {{ .License }} </td> </tr>
@@ -388,24 +388,24 @@ func ServeFile(res http.ResponseWriter, req *http.Request, fs http.FileSystem, f
 func InitPluginList(code []byte) {
 	listOfPackages := regexp.MustCompile(`github.com/mickael-kerjean/([^\"]+)`).FindAllString(string(code), -1)
 	for _, packageName := range listOfPackages {
-		if packageName == "github.com/mickael-kerjean/filestash/server/common" {
+		if packageName == "github.com/KamelTechnology/KamelBox/server/common" {
 			continue
 		}
 
-		if strings.HasPrefix(packageName, "github.com/mickael-kerjean/filestash/server/plugin/") {
+		if strings.HasPrefix(packageName, "github.com/KamelTechnology/KamelBox/server/plugin/") {
 			listOfPlugins["oss"] = append(
 				listOfPlugins["oss"],
-				strings.TrimPrefix(packageName, "github.com/mickael-kerjean/filestash/server/plugin/"),
+				strings.TrimPrefix(packageName, "github.com/KamelTechnology/KamelBox/server/plugin/"),
 			)
-		} else if strings.HasPrefix(packageName, "github.com/mickael-kerjean/filestash/filestash-enterprise/plugins/") {
+		} else if strings.HasPrefix(packageName, "github.com/KamelTechnology/KamelBox/filestash-enterprise/plugins/") {
 			listOfPlugins["enterprise"] = append(
 				listOfPlugins["enterprise"],
-				strings.TrimPrefix(packageName, "github.com/mickael-kerjean/filestash/filestash-enterprise/plugins/"),
+				strings.TrimPrefix(packageName, "github.com/KamelTechnology/KamelBox/filestash-enterprise/plugins/"),
 			)
-		} else if strings.HasPrefix(packageName, "github.com/mickael-kerjean/filestash/filestash-enterprise/customers/") {
+		} else if strings.HasPrefix(packageName, "github.com/KamelTechnology/KamelBox/filestash-enterprise/customers/") {
 			listOfPlugins["custom"] = append(
 				listOfPlugins["custom"],
-				strings.TrimPrefix(packageName, "github.com/mickael-kerjean/filestash/filestash-enterprise/customers/"),
+				strings.TrimPrefix(packageName, "github.com/KamelTechnology/KamelBox/filestash-enterprise/customers/"),
 			)
 		} else {
 			listOfPlugins["custom"] = append(

@@ -2,7 +2,7 @@ package ctrl
 
 import (
 	"fmt"
-	. "github.com/mickael-kerjean/filestash/server/common"
+	. "github.com/KamelTechnology/KamelBox/server/common"
 	"net/http"
 	"os"
 )

@@ -4,8 +4,8 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/gorilla/mux"
-	. "github.com/mickael-kerjean/filestash/server/common"
-	"github.com/mickael-kerjean/filestash/server/common/ssl"
+	. "github.com/KamelTechnology/KamelBox/server/common"
+	"github.com/KamelTechnology/KamelBox/server/common/ssl"
 	"net/http"
 	"time"
 )

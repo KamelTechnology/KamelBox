@@ -2,8 +2,8 @@ package ctrl
 
 import (
 	"fmt"
-	. "github.com/mickael-kerjean/filestash/server/common"
-	"github.com/mickael-kerjean/filestash/server/middleware"
+	. "github.com/KamelTechnology/KamelBox/server/common"
+	"github.com/KamelTechnology/KamelBox/server/middleware"
 	"io"
 	"net/http"
 	"strings"

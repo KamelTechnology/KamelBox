@@ -11,7 +11,7 @@ import (
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	
-	. "github.com/mickael-kerjean/filestash/server/common"
+	. "github.com/KamelTechnology/KamelBox/server/common"
 
 	"io"
 	"os"

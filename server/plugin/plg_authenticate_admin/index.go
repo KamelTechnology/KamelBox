@@ -2,7 +2,7 @@ package plg_authenticate_admin
 
 import (
 	"fmt"
-	. "github.com/mickael-kerjean/filestash/server/common"
+	. "github.com/KamelTechnology/KamelBox/server/common"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )

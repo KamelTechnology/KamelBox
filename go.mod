@@ -1,4 +1,4 @@
-module github.com/mickael-kerjean/filestash
+module github.com/KamelTechnology/KamelBox
 
 go 1.20
 
