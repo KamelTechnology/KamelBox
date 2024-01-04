@@ -41,7 +41,7 @@ func (this OSSBackend) Init(params map[string]string, app *App) (IBackend, error
 		params["region"] = "oss-me-central-1"
 	}
 
-	if params["endpoint"] = "" {
+	if params["endpoint"] == "" {
 		params["endpoint"] = "oss-me-central-1.aliyuncs.com"
 	}
 	
