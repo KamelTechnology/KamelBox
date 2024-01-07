@@ -116,7 +116,7 @@ function setup_dom() {
 }
 
 function setup_translation() {
-    let selectedLanguage = "en";
+    let selectedLanguage = "ar";
     switch(navigator.language) {
     case "zh-TW":
         selectedLanguage = "zh_tw";
@@ -124,7 +124,7 @@ function setup_translation() {
     default:
         const userLanguage = navigator.language.split("-")[0];
         const idx = [
-            "az", "be", "bg", "ca", "cs", "da", "de", "el", "es", "et",
+            "ar", "az", "be", "bg", "ca", "cs", "da", "de", "el", "es", "et",
             "eu", "fi", "fr", "gl", "hr", "hu", "id", "is", "it", "ja",
             "ka", "ko", "lt", "lv", "mn", "nb", "nl", "pl", "pt", "ro",
             "ru", "sk", "sl", "sr", "sv", "th", "tr", "uk", "vi", "zh",
@@ -134,7 +134,7 @@ function setup_translation() {
         }
     }
 
-    if (selectedLanguage === "en") {
+    if (selectedLanguage === "ar") {
         return Promise.resolve();
     }
     return http_get("/assets/locales/"+selectedLanguage+".json").then((d) => {

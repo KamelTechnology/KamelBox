@@ -69,5 +69,5 @@ RUN useradd KamelBox && \
     rm -rf /tmp/*
 
 USER KamelBox
-CMD ["/app/KamelBox"]
+CMD ["/app/filestash"]
 EXPOSE 8334

@@ -3,7 +3,6 @@ package plg_backend_dav
 import (
 	"encoding/xml"
 	"fmt"
-	. "github.com/KamelTechnology/KamelBox/server/common"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -13,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	. "github.com/KamelTechnology/KamelBox/server/common"
 )
 
 var DavCache AppCache
@@ -684,7 +685,7 @@ func queryNewCalendar(name string) io.Reader {
       </C:supported-calendar-component-set>
       <displayname>{{NAME}}</displayname>
       <C:calendar-description></C:calendar-description>
-      <I:calendar-color>#9AD1ED</I:calendar-color>
+      <I:calendar-color>#ffccc0</I:calendar-color>
     </prop>
   </set>
 </create>`

@@ -9,6 +9,7 @@ import (
 
 	. "github.com/KamelTechnology/KamelBox/server/common"
 
+	"bytes"
 	"io"
 	"os"
 	"path/filepath"
@@ -248,7 +249,7 @@ func (this OSSBackend) Mkdir(path string) error {
 	// 	})
 	// 	return err
 	// }
-	err2 := bucket.PutObject(path, strings.NewReader(""))
+	err2 := bucket.PutObject(p.path, bytes.NewReader([]byte("")))
 	return err2
 }
 
@@ -349,7 +350,6 @@ func (this OSSBackend) Mv(from string, to string) error {
 	if err != nil {
 		return err
 	}
-	// client := s3.New(this.createSession(f.bucket))
 
 	// CASE 1: Rename a bucket
 	if f.path == "" {
@@ -357,17 +357,11 @@ func (this OSSBackend) Mv(from string, to string) error {
 	}
 	// CASE 2: Rename/Move a file
 	if strings.HasSuffix(from, "/") == false {
-		// input := &s3.CopyObjectInput{
-		// 	CopySource: aws.String(fmt.Sprintf("%s/%s", f.bucket, f.path)),
-		// 	Bucket:     aws.String(t.bucket),
-		// 	Key:        aws.String(t.path),
-		// }
-		// if this.params["encryption_key"] != "" {
-		// 	input.CopySourceSSECustomerAlgorithm = aws.String("AES256")
-		// 	input.CopySourceSSECustomerKey = aws.String(this.params["encryption_key"])
-		// 	input.SSECustomerAlgorithm = aws.String("AES256")
-		// 	input.SSECustomerKey = aws.String(this.params["encryption_key"])
-		// }
+		err2 := bucket.PutObject(t.path, strings.NewReader(""))
+		if err2 != nil {
+			return err2
+		}
+
 		_, err := bucket.CopyObject(t.path, f.path)
 		if err != nil {
 			return err
@@ -375,76 +369,28 @@ func (this OSSBackend) Mv(from string, to string) error {
 		err = bucket.DeleteObject(f.path)
 		return err
 	}
+
 	// CASE 3: Rename/Move a folder
-	// jobChan := make(chan []OSSPath, this.threadSize)
-	// errChan := make(chan error, this.threadSize)
-	// ctx, cancel := context.WithCancel(this.context)
-	// var wg sync.WaitGroup
-	// for i := 1; i <= this.threadSize; i++ {
-	// 	wg.Add(1)
-	// 	go func() {
-	// 		for spath := range jobChan {
-	// 			if ctx.Err() != nil {
-	// 				continue
-	// 			}
-	// 			input := &s3.CopyObjectInput{
-	// 				CopySource: aws.String(fmt.Sprintf("%s/%s", spath[0].bucket, spath[0].path)),
-	// 				Bucket:     aws.String(spath[1].bucket),
-	// 				Key:        aws.String(spath[1].path),
-	// 			}
-	// 			if this.params["encryption_key"] != "" {
-	// 				input.CopySourceSSECustomerAlgorithm = aws.String("AES256")
-	// 				input.CopySourceSSECustomerKey = aws.String(this.params["encryption_key"])
-	// 				input.SSECustomerAlgorithm = aws.String("AES256")
-	// 				input.SSECustomerKey = aws.String(this.params["encryption_key"])
-	// 			}
-	// 			_, err := client.CopyObject(input)
-	// 			if err != nil {
-	// 				cancel()
-	// 				errChan <- err
-	// 				continue
-	// 			}
-	// 			_, err = client.DeleteObject(&s3.DeleteObjectInput{
-	// 				Bucket: aws.String(spath[0].bucket),
-	// 				Key:    aws.String(spath[0].path),
-	// 			})
-	// 			if err != nil {
-	// 				cancel()
-	// 				errChan <- err
-	// 				continue
-	// 			}
-	// 		}
-	// 		wg.Done()
-	// 	}()
-	// }
-	// err := client.ListObjectsV2PagesWithContext(
-	// 	this.context,
-	// 	&s3.ListObjectsV2Input{
-	// 		Bucket: aws.String(f.bucket),
-	// 		Prefix: aws.String(f.path),
-	// 	},
-	// 	func(objs *s3.ListObjectsV2Output, lastPage bool) bool {
-	// 		if ctx.Err() != nil {
-	// 			return false
-	// 		}
-	// 		for _, object := range objs.Contents {
-	// 			jobChan <- []OSSPath{
-	// 				{f.bucket, *object.Key},
-	// 				{t.bucket, t.path + strings.TrimPrefix(*object.Key, f.path)},
-	// 			}
-	// 		}
-	// 		return aws.BoolValue(objs.IsTruncated)
-	// 	},
-	// )
-	// close(jobChan)
-	// wg.Wait()
-	// close(errChan)
-	// if err != nil {
-	// 	return err
-	// }
-	// for err := range errChan {
-	// 	return err
-	// }
+	objects, err := listObjects(bucket, f.path)
+	if err != nil {
+		return err
+	}
+
+	// Copy objects to the new directory
+	for _, obj := range objects {
+		err := copyObject(bucket, obj.Key, t.path+obj.Key[len(f.path):])
+		if err != nil {
+			return err
+		}
+	}
+
+	// Delete objects from the source directory
+	for _, obj := range objects {
+		err := deleteObject(bucket, obj.Key)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -565,4 +511,22 @@ func listObjects(bucket *oss.Bucket, prefix string) ([]oss.ObjectProperties, err
 	}
 
 	return objects, nil
+}
+
+// Function to copy an object within the bucket
+func copyObject(bucket *oss.Bucket, sourceKey, destinationKey string) error {
+	_, err := bucket.CopyObject(sourceKey, destinationKey)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Function to delete an object within the bucket
+func deleteObject(bucket *oss.Bucket, key string) error {
+	err := bucket.DeleteObject(key)
+	if err != nil {
+		return err
+	}
+	return nil
 }

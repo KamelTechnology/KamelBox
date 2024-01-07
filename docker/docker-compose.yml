@@ -1,8 +1,8 @@
 version: '2'
 services:
   app:
-    container_name: filestash
-    image: machines/filestash
+    container_name: kamelbox
+    image: kamelbox:latest
     restart: always
     environment:
     - APPLICATION_URL=
@@ -13,14 +13,14 @@ services:
     ports:
     - "8334:8334"
     volumes:
-    - filestash:/app/data/state/
+    - kamelbox:/app/data/state/
 
   onlyoffice:
-    container_name: filestash_oods
+    container_name: kamelbox_oods
     image: onlyoffice/documentserver
     restart: always
     security_opt:
       - seccomp:unconfined
 
 volumes:
-    filestash: {}
+    kamelbox: {}

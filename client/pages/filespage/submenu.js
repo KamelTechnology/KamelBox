@@ -185,17 +185,17 @@ class SubmenuComponent extends React.Component {
                                             <DropdownItem
                                                 name="type"
                                                 icon={this.props.sort === "type" ? "check" : null}>
-                                                { t("Sort By Type") }
+                                                { t("الترتيب حسب النوع") }
                                             </DropdownItem>
                                             <DropdownItem
                                                 name="date"
                                                 icon={this.props.sort === "date" ? "check" : null}>
-                                                { t("Sort By Date") }
+                                                { t("الترتيب حسب التاريخ") }
                                             </DropdownItem>
                                             <DropdownItem
                                                 name="name"
                                                 icon={this.props.sort === "name" ? "check" : null}>
-                                                { t("Sort By Name") }
+                                                { t("الترتيب حسب الإسم") }
                                             </DropdownItem>
                                         </DropdownList>
                                     </Dropdown>
@@ -223,7 +223,7 @@ class SubmenuComponent extends React.Component {
                                                     onChange={(e) => this.onSearchKeypress(e.target.value, true)}
                                                     type="text"
                                                     id="search"
-                                                    placeholder={ t("search") }
+                                                    placeholder={ t("بحث") }
                                                     name="search"
                                                     autoComplete="off" />
                                                 <label htmlFor="search" className="hidden">{ t("search") }</label>
