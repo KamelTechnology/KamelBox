@@ -4,10 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"sync"
-
-	"bytes"
-	"fmt"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	
@@ -207,263 +203,291 @@ func (this OSSBackend) Ls(path string) (files []os.FileInfo, err error) {
 	return files, err
 }
 
-// func (this OSSBackend) Cat(path string) (io.ReadCloser, error) {
-// 	p := this.path(path)
+func (this OSSBackend) Cat(path string) (io.ReadCloser, error) {
+	p := this.path(path)
 
-// 	obj, err := client.GetObject(input)
-// 	if err != nil {
-// 		awsErr, ok := err.(awserr.Error)
-// 		if ok == false {
-// 			return nil, err
-// 		}
-// 		if awsErr.Code() == "InvalidRequest" && strings.Contains(awsErr.Message(), "encryption") {
-// 			input.SSECustomerAlgorithm = nil
-// 			input.SSECustomerKey = nil
-// 			obj, err = client.GetObject(input)
-// 			return obj.Body, err
-// 		} else if awsErr.Code() == "InvalidArgument" && strings.Contains(awsErr.Message(), "secret key was invalid") {
-// 			return nil, NewError("This file is encrypted file, you need the correct key!", 400)
-// 		} else if awsErr.Code() == "AccessDenied" {
-// 			return nil, ErrNotAllowed
-// 		}
-// 		return nil, err
-// 	}
-// 	return obj.Body, nil
-// }
+	bucket, err := this.client.Bucket(p.bucket)
+    if err != nil {
+         return nil, err
+    }
+	obj, err := bucket.GetObject(input)
+	// if err != nil {
+	// 	awsErr, ok := err.(awserr.Error)
+	// 	if ok == false {
+	// 		return nil, err
+	// 	}
+	// 	if awsErr.Code() == "InvalidRequest" && strings.Contains(awsErr.Message(), "encryption") {
+	// 		input.SSECustomerAlgorithm = nil
+	// 		input.SSECustomerKey = nil
+	// 		obj, err = this.client.GetObject(input)
+	// 		return obj.Body, err
+	// 	} else if awsErr.Code() == "InvalidArgument" && strings.Contains(awsErr.Message(), "secret key was invalid") {
+	// 		return nil, NewError("This file is encrypted file, you need the correct key!", 400)
+	// 	} else if awsErr.Code() == "AccessDenied" {
+	// 		return nil, ErrNotAllowed
+	// 	}
+	// 	return nil, err
+	// }
+	return obj.Body, nil
+}
 
-// func (this OSSBackend) Mkdir(path string) error {
-// 	p := this.path(path)
-// 	client := s3.New(this.createSession(p.bucket))
-// 	if p.path == "" {
-// 		_, err := client.CreateBucket(&s3.CreateBucketInput{
-// 			Bucket: aws.String(path),
-// 		})
-// 		return err
-// 	}
-// 	_, err := client.PutObject(&s3.PutObjectInput{
-// 		Bucket: aws.String(p.bucket),
-// 		Key:    aws.String(p.path),
-// 	})
-// 	return err
-// }
+func (this OSSBackend) Mkdir(path string) error {
+	p := this.path(path)
+	bucket, err := this.client.Bucket(p.bucket)
+    if err != nil {
+         return nil, err
+    }
+	// client := s3.New(this.createSession(p.bucket))
+	// if p.path == "" {
+	// 	_, err := client.CreateBucket(&s3.CreateBucketInput{
+	// 		Bucket: aws.String(path),
+	// 	})
+	// 	return err
+	// }
+	_, err := bucket.PutObject(path,  strings.NewReader(""))
+	return err
+}
 
-// func (this OSSBackend) Rm(path string) error {
-// 	p := this.path(path)
-// 	client := s3.New(this.createSession(p.bucket))
-// 	if p.bucket == "" {
-// 		return ErrNotFound
-// 	}
-// 	// CASE 1: remove a file
-// 	if strings.HasSuffix(path, "/") == false {
-// 		_, err := client.DeleteObject(&s3.DeleteObjectInput{
-// 			Bucket: aws.String(p.bucket),
-// 			Key:    aws.String(p.path),
-// 		})
-// 		return err
-// 	}
-// 	// CASE 2: remove a folder
-// 	jobChan := make(chan S3Path, this.threadSize)
-// 	errChan := make(chan error, this.threadSize)
-// 	ctx, cancel := context.WithCancel(this.context)
-// 	var wg sync.WaitGroup
-// 	for i := 1; i <= this.threadSize; i++ {
-// 		wg.Add(1)
-// 		go func() {
-// 			for spath := range jobChan {
-// 				if ctx.Err() != nil {
-// 					continue
-// 				}
-// 				if _, err := client.DeleteObject(&s3.DeleteObjectInput{
-// 					Bucket: aws.String(spath.bucket),
-// 					Key:    aws.String(spath.path),
-// 				}); err != nil {
-// 					cancel()
-// 					errChan <- err
-// 				}
-// 			}
-// 			wg.Done()
-// 		}()
-// 	}
-// 	err := client.ListObjectsV2PagesWithContext(
-// 		this.context,
-// 		&s3.ListObjectsV2Input{
-// 			Bucket: aws.String(p.bucket),
-// 			Prefix: aws.String(p.path),
-// 		},
-// 		func(objs *s3.ListObjectsV2Output, lastPage bool) bool {
-// 			if ctx.Err() != nil {
-// 				return false
-// 			}
-// 			for _, object := range objs.Contents {
-// 				jobChan <- S3Path{p.bucket, *object.Key}
-// 			}
-// 			return aws.BoolValue(objs.IsTruncated)
-// 		},
-// 	)
-// 	close(jobChan)
-// 	wg.Wait()
-// 	close(errChan)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	for err := range errChan {
-// 		return err
-// 	}
-// 	if p.path == "" {
-// 		_, err := client.DeleteBucket(&s3.DeleteBucketInput{
-// 			Bucket: aws.String(p.bucket),
-// 		})
-// 		return err
-// 	}
-// 	return err
-// }
+func (this OSSBackend) Rm(path string) error {
+	p := this.path(path)
+	bucket, err := this.client.Bucket(p.bucket)
+	if err != nil {
+		return nil, err
+   	}
+	// client := s3.New(this.createSession(p.bucket))
+	if p.bucket == "" {
+		return ErrNotFound
+	}
+	// CASE 1: remove a file
+	if strings.HasSuffix(path, "/") == false {
+		_, err := bucket.DeleteObject(p.path)
+		return err
+	}
+	// CASE 2: remove a folder
+	// List objects with the specified prefix
+	objects, err := listObjects(bucket, p.path)
+	if err != nil {
+		return nil, err
+	}
 
-// func (this OSSBackend) Mv(from string, to string) error {
-// 	if from == to {
-// 		return nil
-// 	}
-// 	f := this.path(from)
-// 	t := this.path(to)
-// 	client := s3.New(this.createSession(f.bucket))
+	// Delete each object with the specified prefix
+	for _, obj := range objects {
+		_, err := bucket.DeleteObject(obj.Key)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// CASE 2: remove a folder
+	// jobChan := make(chan OSSPath, this.threadSize)
+	// errChan := make(chan error, this.threadSize)
+	// ctx, cancel := context.WithCancel(this.context)
+	// var wg sync.WaitGroup
+	// for i := 1; i <= this.threadSize; i++ {
+	// 	wg.Add(1)
+	// 	go func() {
+	// 		for spath := range jobChan {
+	// 			if ctx.Err() != nil {
+	// 				continue
+	// 			}
+	// 			if _, err := bucket.DeleteObject(spath.path);
+	// 			err != nil {
+	// 				cancel()
+	// 				errChan <- err
+	// 			}
+	// 		}
+	// 		wg.Done()
+	// 	}()
+	// }
+	// err := this.client.ListObjectsV2PagesWithContext(
+	// 	this.context,
+	// 	&s3.ListObjectsV2Input{
+	// 		Bucket: aws.String(p.bucket),
+	// 		Prefix: aws.String(p.path),
+	// 	},
+	// 	func(objs *s3.ListObjectsV2Output, lastPage bool) bool {
+	// 		if ctx.Err() != nil {
+	// 			return false
+	// 		}
+	// 		for _, object := range objs.Contents {
+	// 			jobChan <- OSSPath{p.bucket, *object.Key}
+	// 		}
+	// 		return aws.BoolValue(objs.IsTruncated)
+	// 	},
+	// )
+	// close(jobChan)
+	// wg.Wait()
+	// close(errChan)
+	// if err != nil {
+	// 	return err
+	// }
+	// for err := range errChan {
+	// 	return err
+	// }
+	// if p.path == "" {
+	// 	_, err := client.DeleteBucket(&s3.DeleteBucketInput{
+	// 		Bucket: aws.String(p.bucket),
+	// 	})
+	// 	return err
+	// }
+	return err
+}
 
-// 	// CASE 1: Rename a bucket
-// 	if f.path == "" {
-// 		return ErrNotImplemented
-// 	}
-// 	// CASE 2: Rename/Move a file
-// 	if strings.HasSuffix(from, "/") == false {
-// 		input := &s3.CopyObjectInput{
-// 			CopySource: aws.String(fmt.Sprintf("%s/%s", f.bucket, f.path)),
-// 			Bucket:     aws.String(t.bucket),
-// 			Key:        aws.String(t.path),
-// 		}
-// 		if this.params["encryption_key"] != "" {
-// 			input.CopySourceSSECustomerAlgorithm = aws.String("AES256")
-// 			input.CopySourceSSECustomerKey = aws.String(this.params["encryption_key"])
-// 			input.SSECustomerAlgorithm = aws.String("AES256")
-// 			input.SSECustomerKey = aws.String(this.params["encryption_key"])
-// 		}
-// 		_, err := client.CopyObject(input)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		_, err = client.DeleteObject(&s3.DeleteObjectInput{
-// 			Bucket: aws.String(f.bucket),
-// 			Key:    aws.String(f.path),
-// 		})
-// 		return err
-// 	}
-// 	// CASE 3: Rename/Move a folder
-// 	jobChan := make(chan []S3Path, this.threadSize)
-// 	errChan := make(chan error, this.threadSize)
-// 	ctx, cancel := context.WithCancel(this.context)
-// 	var wg sync.WaitGroup
-// 	for i := 1; i <= this.threadSize; i++ {
-// 		wg.Add(1)
-// 		go func() {
-// 			for spath := range jobChan {
-// 				if ctx.Err() != nil {
-// 					continue
-// 				}
-// 				input := &s3.CopyObjectInput{
-// 					CopySource: aws.String(fmt.Sprintf("%s/%s", spath[0].bucket, spath[0].path)),
-// 					Bucket:     aws.String(spath[1].bucket),
-// 					Key:        aws.String(spath[1].path),
-// 				}
-// 				if this.params["encryption_key"] != "" {
-// 					input.CopySourceSSECustomerAlgorithm = aws.String("AES256")
-// 					input.CopySourceSSECustomerKey = aws.String(this.params["encryption_key"])
-// 					input.SSECustomerAlgorithm = aws.String("AES256")
-// 					input.SSECustomerKey = aws.String(this.params["encryption_key"])
-// 				}
-// 				_, err := client.CopyObject(input)
-// 				if err != nil {
-// 					cancel()
-// 					errChan <- err
-// 					continue
-// 				}
-// 				_, err = client.DeleteObject(&s3.DeleteObjectInput{
-// 					Bucket: aws.String(spath[0].bucket),
-// 					Key:    aws.String(spath[0].path),
-// 				})
-// 				if err != nil {
-// 					cancel()
-// 					errChan <- err
-// 					continue
-// 				}
-// 			}
-// 			wg.Done()
-// 		}()
-// 	}
-// 	err := client.ListObjectsV2PagesWithContext(
-// 		this.context,
-// 		&s3.ListObjectsV2Input{
-// 			Bucket: aws.String(f.bucket),
-// 			Prefix: aws.String(f.path),
-// 		},
-// 		func(objs *s3.ListObjectsV2Output, lastPage bool) bool {
-// 			if ctx.Err() != nil {
-// 				return false
-// 			}
-// 			for _, object := range objs.Contents {
-// 				jobChan <- []S3Path{
-// 					{f.bucket, *object.Key},
-// 					{t.bucket, t.path + strings.TrimPrefix(*object.Key, f.path)},
-// 				}
-// 			}
-// 			return aws.BoolValue(objs.IsTruncated)
-// 		},
-// 	)
-// 	close(jobChan)
-// 	wg.Wait()
-// 	close(errChan)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	for err := range errChan {
-// 		return err
-// 	}
-// 	return nil
-// }
+func (this OSSBackend) Mv(from string, to string) error {
+	if from == to {
+		return nil
+	}
+	f := this.path(from)
+	t := this.path(to)
+	bucket, err := this.client.Bucket(p.bucket)
+	if err != nil {
+		return nil, err
+   	}
+	// client := s3.New(this.createSession(f.bucket))
 
-// func (this OSSBackend) Touch(path string) error {
-// 	p := this.path(path)
-// 	client := s3.New(this.createSession(p.bucket))
-// 	if p.bucket == "" {
-// 		return ErrNotValid
-// 	}
-// 	input := &s3.PutObjectInput{
-// 		Body:          strings.NewReader(""),
-// 		ContentLength: aws.Int64(0),
-// 		Bucket:        aws.String(p.bucket),
-// 		Key:           aws.String(p.path),
-// 	}
-// 	if this.params["encryption_key"] != "" {
-// 		input.SSECustomerAlgorithm = aws.String("AES256")
-// 		input.SSECustomerKey = aws.String(this.params["encryption_key"])
-// 	}
-// 	_, err := client.PutObject(input)
-// 	return err
-// }
+	// CASE 1: Rename a bucket
+	if f.path == "" {
+		return ErrNotImplemented
+	}
+	// CASE 2: Rename/Move a file
+	if strings.HasSuffix(from, "/") == false {
+		input := &s3.CopyObjectInput{
+			CopySource: aws.String(fmt.Sprintf("%s/%s", f.bucket, f.path)),
+			Bucket:     aws.String(t.bucket),
+			Key:        aws.String(t.path),
+		}
+		// if this.params["encryption_key"] != "" {
+		// 	input.CopySourceSSECustomerAlgorithm = aws.String("AES256")
+		// 	input.CopySourceSSECustomerKey = aws.String(this.params["encryption_key"])
+		// 	input.SSECustomerAlgorithm = aws.String("AES256")
+		// 	input.SSECustomerKey = aws.String(this.params["encryption_key"])
+		// }
+		_, err := bucket.CopyObject(t.path, f.path)
+		if err != nil {
+			return err
+		}
+		_, err = bucket.DeleteObject(f.path)
+		return err
+	}
+	// CASE 3: Rename/Move a folder
+	// jobChan := make(chan []OSSPath, this.threadSize)
+	// errChan := make(chan error, this.threadSize)
+	// ctx, cancel := context.WithCancel(this.context)
+	// var wg sync.WaitGroup
+	// for i := 1; i <= this.threadSize; i++ {
+	// 	wg.Add(1)
+	// 	go func() {
+	// 		for spath := range jobChan {
+	// 			if ctx.Err() != nil {
+	// 				continue
+	// 			}
+	// 			input := &s3.CopyObjectInput{
+	// 				CopySource: aws.String(fmt.Sprintf("%s/%s", spath[0].bucket, spath[0].path)),
+	// 				Bucket:     aws.String(spath[1].bucket),
+	// 				Key:        aws.String(spath[1].path),
+	// 			}
+	// 			if this.params["encryption_key"] != "" {
+	// 				input.CopySourceSSECustomerAlgorithm = aws.String("AES256")
+	// 				input.CopySourceSSECustomerKey = aws.String(this.params["encryption_key"])
+	// 				input.SSECustomerAlgorithm = aws.String("AES256")
+	// 				input.SSECustomerKey = aws.String(this.params["encryption_key"])
+	// 			}
+	// 			_, err := client.CopyObject(input)
+	// 			if err != nil {
+	// 				cancel()
+	// 				errChan <- err
+	// 				continue
+	// 			}
+	// 			_, err = client.DeleteObject(&s3.DeleteObjectInput{
+	// 				Bucket: aws.String(spath[0].bucket),
+	// 				Key:    aws.String(spath[0].path),
+	// 			})
+	// 			if err != nil {
+	// 				cancel()
+	// 				errChan <- err
+	// 				continue
+	// 			}
+	// 		}
+	// 		wg.Done()
+	// 	}()
+	// }
+	// err := client.ListObjectsV2PagesWithContext(
+	// 	this.context,
+	// 	&s3.ListObjectsV2Input{
+	// 		Bucket: aws.String(f.bucket),
+	// 		Prefix: aws.String(f.path),
+	// 	},
+	// 	func(objs *s3.ListObjectsV2Output, lastPage bool) bool {
+	// 		if ctx.Err() != nil {
+	// 			return false
+	// 		}
+	// 		for _, object := range objs.Contents {
+	// 			jobChan <- []OSSPath{
+	// 				{f.bucket, *object.Key},
+	// 				{t.bucket, t.path + strings.TrimPrefix(*object.Key, f.path)},
+	// 			}
+	// 		}
+	// 		return aws.BoolValue(objs.IsTruncated)
+	// 	},
+	// )
+	// close(jobChan)
+	// wg.Wait()
+	// close(errChan)
+	// if err != nil {
+	// 	return err
+	// }
+	// for err := range errChan {
+	// 	return err
+	// }
+	// return nil
+}
 
-// func (this OSSBackend) Save(path string, file io.Reader) error {
-// 	p := this.path(path)
-// 	if p.bucket == "" {
-// 		return ErrNotValid
-// 	}
-// 	uploader := s3manager.NewUploader(this.createSession(p.bucket))
-// 	input := s3manager.UploadInput{
-// 		Body:   file,
-// 		Bucket: aws.String(p.bucket),
-// 		Key:    aws.String(p.path),
-// 	}
-// 	if this.params["encryption_key"] != "" {
-// 		input.SSECustomerAlgorithm = aws.String("AES256")
-// 		input.SSECustomerKey = aws.String(this.params["encryption_key"])
-// 	}
-// 	_, err := uploader.Upload(&input)
-// 	return err
-// }
+func (this OSSBackend) Touch(path string) error {
+	p := this.path(path)
+	// client := s3.New(this.createSession(p.bucket))
+	if p.bucket == "" {
+		return ErrNotValid
+	}
+	bucket, err := this.client.Bucket(p.bucket)
+	if err != nil {
+		return nil, err
+   	}
+	// input := &s3.PutObjectInput{
+	// 	Body:          strings.NewReader(""),
+	// 	ContentLength: aws.Int64(0),
+	// 	Bucket:        aws.String(p.bucket),
+	// 	Key:           aws.String(p.path),
+	// }
+	// if this.params["encryption_key"] != "" {
+	// 	input.SSECustomerAlgorithm = aws.String("AES256")
+	// 	input.SSECustomerKey = aws.String(this.params["encryption_key"])
+	// }
+	_, err := bucket.PutObject(p.path,  strings.NewReader(""))
+	return err
+}
+
+func (this OSSBackend) Save(path string, file io.Reader) error {
+	p := this.path(path)
+	if p.bucket == "" {
+		return ErrNotValid
+	}
+	bucket, err := this.client.Bucket(p.bucket)
+	if err != nil {
+		return nil, err
+   	}
+	// uploader := s3manager.NewUploader(this.createSession(p.bucket))
+	// input := s3manager.UploadInput{
+	// 	Body:   file,
+	// 	Bucket: aws.String(p.bucket),
+	// 	Key:    aws.String(p.path),
+	// }
+	// if this.params["encryption_key"] != "" {
+	// 	input.SSECustomerAlgorithm = aws.String("AES256")
+	// 	input.SSECustomerKey = aws.String(this.params["encryption_key"])
+	// }
+	// _, err := uploader.Upload(&input)
+	_, err = bucket.PutObject(p.path, file)
+	return err
+}
 
 // func (this OSSBackend) createSession(bucket string) *session.Session {
 // 	newParams := map[string]string{"bucket": bucket}
@@ -511,4 +535,27 @@ func (s OSSBackend) path(p string) OSSPath {
 		bucket,
 		path,
 	}
+}
+
+// listObjects returns a list of objects with the specified prefix
+func listObjects(bucket *oss.Bucket, prefix string) ([]oss.ObjectProperties, error) {
+	var objects []oss.ObjectProperties
+
+	marker := ""
+	for {
+		result, err := bucket.ListObjects(oss.Prefix(prefix), oss.Marker(marker))
+		if err != nil {
+			return nil, err
+		}
+
+		objects = append(objects, result.Objects...)
+
+		if result.IsTruncated {
+			marker = result.NextMarker
+		} else {
+			break
+		}
+	}
+
+	return objects, nil
 }
