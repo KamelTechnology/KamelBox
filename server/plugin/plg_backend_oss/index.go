@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	
+
 	. "github.com/KamelTechnology/KamelBox/server/common"
 
 	"io"
@@ -40,17 +40,21 @@ func (this OSSBackend) Init(params map[string]string, app *App) (IBackend, error
 	if params["endpoint"] == "" {
 		params["endpoint"] = "oss-me-central-1.aliyuncs.com"
 	}
-	
+
 	threadSize, err := strconv.Atoi(params["number_thread"])
 	if err != nil {
 		threadSize = 50
 	} else if threadSize > 5000 || threadSize < 1 {
 		threadSize = 2
 	}
+	client, err := oss.New(params["endpoint"], params["access_key_id"], params["secret_access_key"])
+	if err != nil {
+		return nil, err
+	}
 	backend := &OSSBackend{
 		// config:     config,
 		params:     params,
-		client:     oss.New(params["endpoint"], params["access_key_id"], params["secret_access_key"]),
+		client:     client,
 		context:    app.Context,
 		threadSize: threadSize,
 	}
@@ -146,17 +150,17 @@ func (this OSSBackend) Ls(path string) (files []os.FileInfo, err error) {
 	files = make([]os.FileInfo, 0)
 	p := this.path(path)
 	if p.bucket == "" {
-		bucket, err := this.client.Bucket(p.bucket)
-		if err != nil {
-			return nil, err
-		}
+		// bucket, err := this.client.Bucket(p.bucket)
+		// if err != nil {
+		// 	return nil, err
+		// }
 		b, err := this.client.ListBuckets(oss.Prefix(""))
 		if err != nil {
 			return nil, err
 		}
 		for _, bucket := range b.Buckets {
 			files = append(files, &File{
-				FName:   *bucket.Name,
+				FName:   bucket.Name,
 				FType:   "directory",
 				FTime:   bucket.CreationDate.Unix(),
 				CanMove: NewBool(false),
@@ -164,32 +168,32 @@ func (this OSSBackend) Ls(path string) (files []os.FileInfo, err error) {
 		}
 		return files, nil
 	}
-    bucket, err := this.client.Bucket(p.bucket)
-    if err != nil {
-         return nil, err
-    }
+	bucket, err := this.client.Bucket(p.bucket)
+	if err != nil {
+		return nil, err
+	}
 
-    continueToken := ""
-    for {
+	continueToken := ""
+	for {
 		lsRes, err := bucket.ListObjectsV2(oss.Prefix(p.path), oss.ContinuationToken(continueToken), oss.Delimiter("/"))
 		if err != nil {
 			return nil, err
 		}
 
-		for i, object := range lsRes.Objects.Contents {
-			if i == 0 && *object.Key == p.path {
+		for i, object := range lsRes.Objects {
+			if i == 0 && object.Key == p.path {
 				continue
 			}
 			files = append(files, &File{
-				FName: filepath.Base(*object.Key),
+				FName: filepath.Base(object.Key),
 				FType: "file",
 				FTime: object.LastModified.Unix(),
-				FSize: *object.Size,
+				FSize: object.Size,
 			})
 		}
 		for _, dirName := range lsRes.CommonPrefixes {
 			files = append(files, &File{
-				FName: filepath.Base(*dirName.Prefix),
+				FName: filepath.Base(dirName),
 				FType: "directory",
 			})
 			// fmt.Println(dirName)
@@ -199,7 +203,7 @@ func (this OSSBackend) Ls(path string) (files []os.FileInfo, err error) {
 		} else {
 			break
 		}
-    }
+	}
 	return files, err
 }
 
@@ -207,10 +211,10 @@ func (this OSSBackend) Cat(path string) (io.ReadCloser, error) {
 	p := this.path(path)
 
 	bucket, err := this.client.Bucket(p.bucket)
-    if err != nil {
-         return nil, err
-    }
-	obj, err := bucket.GetObject(input)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := bucket.GetObject(p.path)
 	// if err != nil {
 	// 	awsErr, ok := err.(awserr.Error)
 	// 	if ok == false {
@@ -228,15 +232,15 @@ func (this OSSBackend) Cat(path string) (io.ReadCloser, error) {
 	// 	}
 	// 	return nil, err
 	// }
-	return obj.Body, nil
+	return obj, nil
 }
 
 func (this OSSBackend) Mkdir(path string) error {
 	p := this.path(path)
 	bucket, err := this.client.Bucket(p.bucket)
-    if err != nil {
-         return nil, err
-    }
+	if err != nil {
+		return err
+	}
 	// client := s3.New(this.createSession(p.bucket))
 	// if p.path == "" {
 	// 	_, err := client.CreateBucket(&s3.CreateBucketInput{
@@ -244,37 +248,37 @@ func (this OSSBackend) Mkdir(path string) error {
 	// 	})
 	// 	return err
 	// }
-	_, err := bucket.PutObject(path,  strings.NewReader(""))
-	return err
+	err2 := bucket.PutObject(path, strings.NewReader(""))
+	return err2
 }
 
 func (this OSSBackend) Rm(path string) error {
 	p := this.path(path)
 	bucket, err := this.client.Bucket(p.bucket)
 	if err != nil {
-		return nil, err
-   	}
+		return err
+	}
 	// client := s3.New(this.createSession(p.bucket))
 	if p.bucket == "" {
 		return ErrNotFound
 	}
 	// CASE 1: remove a file
 	if strings.HasSuffix(path, "/") == false {
-		_, err := bucket.DeleteObject(p.path)
+		err := bucket.DeleteObject(p.path)
 		return err
 	}
 	// CASE 2: remove a folder
 	// List objects with the specified prefix
 	objects, err := listObjects(bucket, p.path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Delete each object with the specified prefix
 	for _, obj := range objects {
-		_, err := bucket.DeleteObject(obj.Key)
+		err := bucket.DeleteObject(obj.Key)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 	// CASE 2: remove a folder
@@ -338,10 +342,13 @@ func (this OSSBackend) Mv(from string, to string) error {
 	}
 	f := this.path(from)
 	t := this.path(to)
-	bucket, err := this.client.Bucket(p.bucket)
+	if t.bucket != f.bucket {
+		return nil
+	}
+	bucket, err := this.client.Bucket(f.bucket)
 	if err != nil {
-		return nil, err
-   	}
+		return err
+	}
 	// client := s3.New(this.createSession(f.bucket))
 
 	// CASE 1: Rename a bucket
@@ -350,11 +357,11 @@ func (this OSSBackend) Mv(from string, to string) error {
 	}
 	// CASE 2: Rename/Move a file
 	if strings.HasSuffix(from, "/") == false {
-		input := &s3.CopyObjectInput{
-			CopySource: aws.String(fmt.Sprintf("%s/%s", f.bucket, f.path)),
-			Bucket:     aws.String(t.bucket),
-			Key:        aws.String(t.path),
-		}
+		// input := &s3.CopyObjectInput{
+		// 	CopySource: aws.String(fmt.Sprintf("%s/%s", f.bucket, f.path)),
+		// 	Bucket:     aws.String(t.bucket),
+		// 	Key:        aws.String(t.path),
+		// }
 		// if this.params["encryption_key"] != "" {
 		// 	input.CopySourceSSECustomerAlgorithm = aws.String("AES256")
 		// 	input.CopySourceSSECustomerKey = aws.String(this.params["encryption_key"])
@@ -365,7 +372,7 @@ func (this OSSBackend) Mv(from string, to string) error {
 		if err != nil {
 			return err
 		}
-		_, err = bucket.DeleteObject(f.path)
+		err = bucket.DeleteObject(f.path)
 		return err
 	}
 	// CASE 3: Rename/Move a folder
@@ -438,7 +445,7 @@ func (this OSSBackend) Mv(from string, to string) error {
 	// for err := range errChan {
 	// 	return err
 	// }
-	// return nil
+	return nil
 }
 
 func (this OSSBackend) Touch(path string) error {
@@ -449,8 +456,8 @@ func (this OSSBackend) Touch(path string) error {
 	}
 	bucket, err := this.client.Bucket(p.bucket)
 	if err != nil {
-		return nil, err
-   	}
+		return err
+	}
 	// input := &s3.PutObjectInput{
 	// 	Body:          strings.NewReader(""),
 	// 	ContentLength: aws.Int64(0),
@@ -461,8 +468,8 @@ func (this OSSBackend) Touch(path string) error {
 	// 	input.SSECustomerAlgorithm = aws.String("AES256")
 	// 	input.SSECustomerKey = aws.String(this.params["encryption_key"])
 	// }
-	_, err := bucket.PutObject(p.path,  strings.NewReader(""))
-	return err
+	err2 := bucket.PutObject(p.path, strings.NewReader(""))
+	return err2
 }
 
 func (this OSSBackend) Save(path string, file io.Reader) error {
@@ -472,8 +479,8 @@ func (this OSSBackend) Save(path string, file io.Reader) error {
 	}
 	bucket, err := this.client.Bucket(p.bucket)
 	if err != nil {
-		return nil, err
-   	}
+		return err
+	}
 	// uploader := s3manager.NewUploader(this.createSession(p.bucket))
 	// input := s3manager.UploadInput{
 	// 	Body:   file,
@@ -485,7 +492,7 @@ func (this OSSBackend) Save(path string, file io.Reader) error {
 	// 	input.SSECustomerKey = aws.String(this.params["encryption_key"])
 	// }
 	// _, err := uploader.Upload(&input)
-	_, err = bucket.PutObject(p.path, file)
+	err = bucket.PutObject(p.path, file)
 	return err
 }
 
