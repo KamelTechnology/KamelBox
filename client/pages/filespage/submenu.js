@@ -150,7 +150,7 @@ class SubmenuComponent extends React.Component {
                             type="inline"
                             onMouseDown={this.onDownload.bind(this, this.props.selected)}>
                             <ReactCSSTransitionGroup transitionName="submenuwithSelection" transitionLeave={false} transitionEnter={false} transitionAppear={true} transitionAppearTimeout={10000}>
-                                <span>{ t("Download") }</span>
+                                <span>{ t("تحميل") }</span>
                             </ReactCSSTransitionGroup>
                         </NgIf>
                         <NgIf
@@ -159,7 +159,7 @@ class SubmenuComponent extends React.Component {
                             type="inline"
                             onMouseDown={this.onDelete.bind(this, this.props.selected)}>
                             <ReactCSSTransitionGroup transitionName="submenuwithSelection" transitionLeave={false} transitionEnter={false} transitionAppear={true} transitionAppearTimeout={10000}>
-                                <span>{ t("Remove") }</span>
+                                <span>{ t("حذف") }</span>
                             </ReactCSSTransitionGroup>
                         </NgIf>
                         <NgIf
@@ -168,7 +168,7 @@ class SubmenuComponent extends React.Component {
                             type="inline"
                             onMouseDown={this.onExtract.bind(this, this.props.selected)}>
                             <ReactCSSTransitionGroup transitionName="submenuwithSelection" transitionLeave={false} transitionEnter={false} transitionAppear={true} transitionAppearTimeout={10000}>
-                                <span>{ t("Extract") }</span>
+                                <span>{ t("فك الضغط") }</span>
                             </ReactCSSTransitionGroup>
                         </NgIf>
 
@@ -226,7 +226,7 @@ class SubmenuComponent extends React.Component {
                                                     placeholder={ t("بحث") }
                                                     name="search"
                                                     autoComplete="off" />
-                                                <label htmlFor="search" className="hidden">{ t("search") }</label>
+                                                <label htmlFor="search" className="hidden">{ t("بحث") }</label>
                                             </NgIf>
                                         </form>
                                     </div>

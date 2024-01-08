@@ -18,7 +18,7 @@ class ComponentBreadcrumb extends window.HTMLDivElement {
             <div class="breadcrumb no-select">
                 <div class="ul">
                     <span data-bind="path"></span>
-                    <div class="li component_logout">${this.__htmlLogout()}</div>
+                    <div class="li component_logout" style=" padding:25px 0;">${this.__htmlLogout()}</div>
                 </div>
             </div>
         </div>`;

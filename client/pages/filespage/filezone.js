@@ -47,7 +47,7 @@ function MobileFileUploadComponent({ emit, path, accessRight }) {
             <div className="component_mobilefileupload no-select">
                 <form>
                     <input onChange={onUpload} type="file" name="file" id="mobilefileupload" multiple/>
-                    <label htmlFor="mobilefileupload">
+                    <label htmlFor="mobilefileupload" style="border-radius:3px; background: #0048c6;">
                         <Icon name="upload_white"/>
                     </label>
                 </form>
