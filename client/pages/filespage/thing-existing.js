@@ -566,7 +566,7 @@ class Image extends React.Component {
         const ext = path.extname(this.props.path).replace(/^\./, "");
         return (
             <span>
-                <Icon name={this.props.icon} />
+                <Icon name={this.props.icon} ext={ext} />
                 <NgIf
                     className="info_extension"
                     cond={!!ext && this.props.view === "grid" && this.props.icon === "file" && this.props.hide_extension !== true}>

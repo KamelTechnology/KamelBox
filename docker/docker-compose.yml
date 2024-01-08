@@ -17,7 +17,7 @@ services:
 
   onlyoffice:
     container_name: kamelbox_oods
-    image: onlyoffice/documentserver
+    image: onlyoffice/documentserver:6.4.2
     restart: always
     security_opt:
       - seccomp:unconfined

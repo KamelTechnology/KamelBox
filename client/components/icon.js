@@ -54,7 +54,28 @@ export const Icon = (props) => {
     if (props.name === "directory") {
         img = "/assets/icons/folder.svg";
     } else if (props.name === "file") {
-        img = "/assets/icons/file.svg";
+
+        const videoExt = ["mp4", "mov", "avi", "wmv", "mkv", "webm"]
+
+        if (props.ext === "docx" || props.ext === "doc") {
+            img = "/assets/icons/file_doc.svg";
+        } 
+        else if(props.ext === "pptx" || props.ext === "ppt") {
+            img = "/assets/icons/file_ppt.svg";
+        }
+        else if(props.ext === "xlsx" || props.ext === "xls" || props.ext === "csv") {
+            img = "/assets/icons/file_xls.svg";
+        }
+        else if(props.ext === "pdf") {
+            img = "/assets/icons/file_pdf.svg";
+        }
+        else if(videoExt.includes(props.ext)) {
+            img = "/assets/icons/file_video.svg";
+        }
+        else {
+            img = "/assets/icons/file.svg";
+        }
+
     } else if (props.name === "save") {
         img = img_save;
     } else if (props.name === "power") {

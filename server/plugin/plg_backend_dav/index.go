@@ -685,7 +685,7 @@ func queryNewCalendar(name string) io.Reader {
       </C:supported-calendar-component-set>
       <displayname>{{NAME}}</displayname>
       <C:calendar-description></C:calendar-description>
-      <I:calendar-color>#ffccc0</I:calendar-color>
+      <I:calendar-color>#d6e5ff</I:calendar-color>
     </prop>
   </set>
 </create>`
